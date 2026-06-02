@@ -1,0 +1,68 @@
+[
+  {
+    "case_id": "C2024-0152",
+    "defect_type": "BGA虚焊",
+    "severity": "CRITICAL",
+    "root_cause": "回流焊 Zone3 温度偏低，TAL (Time Above Liquidus) 仅 45 秒，不满足 ≥60 秒要求",
+    "corrective_action": "上调 Zone3 设定温度 +5°C；重新验证测温板 Profile 至 TAL=68s",
+    "image_features": ["void>25%", "IMC layer<1μm", "solder ball surface rough"],
+    "affected_batch": "B2406-032",
+    "resolution": "已解决 — 后续 3 批次 Profile 验证合格",
+    "preventive_measure": "增加每日 Profile 验证频次为每班次 1 次"
+  },
+  {
+    "case_id": "C2024-0148",
+    "defect_type": "桥接",
+    "severity": "CRITICAL",
+    "root_cause": "S2 印刷机钢网清洗周期不足 (每 50 块清洗)，锡膏残留导致细间距引脚间桥接",
+    "corrective_action": "将 S2 钢网清洗周期缩短为每 25 块；更换新刮刀 (旧刮刀已磨损 0.3mm)",
+    "image_features": ["fine-pitch bridge", "solder paste smear", "0.4mm pitch QFP"],
+    "affected_batch": "B2406-028, B2406-029",
+    "resolution": "已解决 — 桥接率从 3.2% 降至 0.1%",
+    "preventive_measure": "所有细间距产品统一使用每 25 块清洗周期；刮刀寿命管理阈值从 0.5mm 收紧为 0.3mm"
+  },
+  {
+    "case_id": "C2024-0140",
+    "defect_type": "偏移",
+    "severity": "WARN",
+    "root_cause": "贴片机 Nozzle 3 磨损导致真空吸附力不足，0201 元件在贴装过程中发生位移",
+    "corrective_action": "更换 Nozzle 3；该校准贴装高度和吹气时间参数",
+    "image_features": ["offset>0.3mm", "0201 component", "consistent direction bias"],
+    "affected_batch": "B2406-025",
+    "resolution": "已解决 — 更换 Nozzle 后 0201 贴装精度恢复至 ±0.05mm",
+    "preventive_measure": "Nozzle 真空度检查纳入每班次点检项目"
+  },
+  {
+    "case_id": "C2024-0135",
+    "defect_type": "少锡",
+    "severity": "WARN",
+    "root_cause": "锡膏印刷机刮刀压力偏低 (设定 80N，实际 72N)，导致细间距焊盘锡膏转移量不足",
+    "corrective_action": "校准刮刀压力传感器；将所有细间距产品刮刀压力统一调整至 85±5N",
+    "image_features": ["insufficient paste", "fine-pitch pad", "uneven coverage"],
+    "affected_batch": "B2406-020",
+    "resolution": "已解决 — 锡膏覆盖率从 78% 提升至 95%",
+    "preventive_measure": "刮刀压力每日点检增加实测值记录"
+  },
+  {
+    "case_id": "C2024-0128",
+    "defect_type": "划伤",
+    "severity": "INFO",
+    "root_cause": "周转架橡胶垫老化变硬，PCB 放入/取出时背面被刮伤",
+    "corrective_action": "更换所有老化周转架橡胶垫 (共 12 个)；增加 PCB 间保护纸",
+    "image_features": ["linear scratch", "backside", "parallel to edge"],
+    "affected_batch": "B2406-015 (仅 2 pcs)",
+    "resolution": "已解决 — 后续批次无新增划伤",
+    "preventive_measure": "周转架橡胶垫纳入月度点检，硬度 > Shore A 70 即更换"
+  },
+  {
+    "case_id": "C2024-0120",
+    "defect_type": "错件",
+    "severity": "CRITICAL",
+    "root_cause": "相似封装元件 (0402 10kΩ vs 0402 100kΩ) 在料架上相邻放置，操作员换料时取错",
+    "corrective_action": "立即隔离 B2406-010 全部产品 100% 复检；重新规划料架布局，相似元件至少间隔 3 个料位",
+    "image_features": ["wrong marking", "0402 package", "similar appearance"],
+    "affected_batch": "B2406-010",
+    "resolution": "已解决 — 复检发现 3 pcs 错件已更换",
+    "preventive_measure": "换料流程增加「扫码校验」步骤；料架增加防呆标识 (color code)"
+  }
+]

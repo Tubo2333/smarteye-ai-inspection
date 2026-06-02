@@ -1,0 +1,95 @@
+[
+  {
+    "file": "pcb_defect_bridge.jpg",
+    "type": "bridge",
+    "label": {
+      "bbox": [
+        291,
+        174,
+        367,
+        209
+      ],
+      "class": "bridge"
+    }
+  },
+  {
+    "file": "pcb_defect_missing_component.jpg",
+    "type": "missing_component",
+    "label": {
+      "bbox": [
+        392,
+        500,
+        447,
+        527
+      ],
+      "class": "missing_component"
+    }
+  },
+  {
+    "file": "pcb_defect_offset.jpg",
+    "type": "offset",
+    "label": {
+      "bbox": [
+        97,
+        265,
+        147,
+        316
+      ],
+      "class": "offset"
+    }
+  },
+  {
+    "file": "pcb_defect_insufficient_solder.jpg",
+    "type": "insufficient_solder",
+    "label": {
+      "bbox": [
+        349,
+        186,
+        370,
+        198
+      ],
+      "class": "insufficient_solder"
+    }
+  },
+  {
+    "file": "pcb_defect_scratch.jpg",
+    "type": "scratch",
+    "label": {
+      "bbox": [
+        371,
+        487,
+        482,
+        552
+      ],
+      "class": "scratch"
+    }
+  },
+  {
+    "file": "pcb_defect_mixed.jpg",
+    "type": "mixed",
+    "label": {
+      "bbox": [
+        707,
+        449,
+        745,
+        461
+      ],
+      "class": "insufficient_solder"
+    }
+  },
+  {
+    "file": "pcb_defect_mixed_1.jpg",
+    "type": "mixed",
+    "label": null
+  },
+  {
+    "file": "pcb_defect_mixed_2.jpg",
+    "type": "mixed",
+    "label": null
+  },
+  {
+    "file": "pcb_defect_mixed_3.jpg",
+    "type": "mixed",
+    "label": null
+  }
+]

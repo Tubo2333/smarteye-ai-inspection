@@ -1,0 +1,33 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+venv/
+
+# Models (large files)
+backend/models/*.pt
+backend/models/*.onnx
+backend/models/*.pth
+
+# Data
+data/pcb_dataset/
+data/chromadb/
+
+# Environment
+.env
+.env.local
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Superpowers
+.superpowers/
