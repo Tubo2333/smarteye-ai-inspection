@@ -8,7 +8,7 @@ cd "$PROJECT_DIR"
 
 echo "=========================================="
 echo "  SmartEye — AI 质检多 Agent 系统"
-echo "  博世苏州 Style"
+echo "  汽车电子 AI 质检"
 echo "=========================================="
 echo ""
 

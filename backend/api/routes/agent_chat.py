@@ -34,7 +34,7 @@ async def agent_chat(req: ChatRequest):
 
     try:
         graph = get_graph()
-        config = {"configurable": {"thread_id": req.session_id}}
+        config = {"configurable": {"thread_id": req.session_id}, "recursion_limit": 50}
 
         final_state = await graph.ainvoke(initial_state, config)
 
@@ -69,7 +69,7 @@ async def agent_chat(req: ChatRequest):
 
         report = final_state.get("report_markdown")
         if report:
-            reply_parts.append(f"\n### 质检报告\n{report[:500]}...")
+            reply_parts.append(report)
 
         if not reply_parts:
             reply_parts.append("任务已完成。")

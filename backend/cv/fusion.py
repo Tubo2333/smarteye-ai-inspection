@@ -274,11 +274,33 @@ def _overall_severity(detections: List[Detection]) -> str:
 # 标注图绘制
 # ═══════════════════════════════════════════════════════════════
 
-def draw_annotations(image: np.ndarray, detections: List[Detection]) -> str:
+def draw_annotations(image: np.ndarray, detections: List[Detection], max_size: int = 1200) -> str:
     """
     在图像上绘制检测标注（bbox + mask + 标签），返回 base64 PNG。
+
+    Args:
+        max_size: 最长边的最大像素数，超出则等比缩放（防止 Streamlit DOM 溢出）
     """
     img = image.copy()
+
+    # 缩放大图
+    h, w = img.shape[:2]
+    longest = max(h, w)
+    scale = 1.0
+    if longest > max_size:
+        scale = max_size / longest
+        new_w, new_h = int(w * scale), int(h * scale)
+        img = cv2.resize(img, (new_w, new_h))
+        # 同步缩放所有 bbox 和 mask
+        for det in detections:
+            det.bbox = [v * scale for v in det.bbox]
+            if det.mask is not None:
+                det.mask = cv2.resize(
+                    det.mask.astype(np.uint8),
+                    (new_w, new_h),
+                    interpolation=cv2.INTER_NEAREST,
+                ).astype(bool)
+
     overlay = img.copy()
 
     for det in detections:

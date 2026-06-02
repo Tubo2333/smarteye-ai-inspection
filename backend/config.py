@@ -40,7 +40,7 @@ SAM_FALLBACK_CHAIN = [
 ]
 
 # ── OpenCV 规则阈值 ──
-SOLDER_AREA_MIN_RATIO = 0.7               # 焊点面积最小比例 (相对标准)
+SOLDER_AREA_MIN_RATIO = 0.7               # 焊点面积最小比例 (相对于标准值)
 SOLDER_CIRCULARITY_MIN = 0.6              # 焊点圆度最小值
 COMPONENT_OFFSET_MAX_RATIO = 0.15         # 元件偏移最大比例 (相对元件尺寸)
 SCRATCH_MAX_LENGTH_MM = 2.0               # 划痕最大长度 (mm)

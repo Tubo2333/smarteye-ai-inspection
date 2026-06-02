@@ -31,3 +31,12 @@ Thumbs.db
 
 # Superpowers
 .superpowers/
+yolo26n.pt
+~
+docs/DEMO_SCRIPT.md
+docs/INTERVIEW_GUIDE.md
+docs/generate_doc.js
+docs/*.docx
+docs/~
+docs/gen_demo_docx.js
+huggingface-space/

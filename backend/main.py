@@ -17,9 +17,15 @@ async def lifespan(app: FastAPI):
     get_graph()
     print("[SmartEye] LangGraph initialized")
 
-    # 预热 YOLO (可选，False 则首次请求时加载)
-    # registry = get_registry()
-    # registry.get_yolo()
+    # 预热 ChromaDB embedding 模型（避免首次查询时崩溃）
+    try:
+        from backend.rag.vector_store import STEmbeddingFunction
+        ef = STEmbeddingFunction()
+        _ = ef.model  # 触发 sentence-transformers 模型加载
+        print(f"[SmartEye] Embedding model loaded: {ef.model_name}")
+    except Exception as e:
+        print(f"[SmartEye] Embedding model skip: {e}")
+
     print("[SmartEye] Ready")
 
     yield
@@ -33,7 +39,7 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(
     title="SmartEye API",
-    description="汽车电子产线 AI 质检多 Agent 系统 — 博世苏州 Style",
+    description="汽车电子产线 AI 质检多 Agent 系统",
     version="1.0.0",
     lifespan=lifespan,
 )
@@ -68,6 +74,24 @@ async def root():
 @app.get("/health")
 async def health_check():
     return {"status": "ok"}
+
+
+# 每次修改代码后递增此版本号，用于确认后端运行的是最新代码
+CODE_VERSION = 6
+
+
+@app.get("/api/debug")
+async def debug_info():
+    """调试接口：查看后端状态"""
+    from backend.api.routes.inspection import _history as inspect_history
+    from backend.api.routes.report import _history as report_history
+    from backend.rag.vector_store import get_knowledge_stats
+    return {
+        "code_version": CODE_VERSION,
+        "inspect_history_count": len(inspect_history),
+        "report_history_count": len(report_history),
+        "knowledge": get_knowledge_stats(),
+    }
 
 
 # ═══════════════════════════════════════════════════════════════

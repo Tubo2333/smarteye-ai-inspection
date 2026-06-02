@@ -168,39 +168,52 @@ def inspection_node(state: SmartEyeState) -> dict:
             enable_sam=True,
         )
 
-        # 转换 Detection 对象为 dict
+        # 转换 Detection 对象为 dict（确保所有数值为原生 Python 类型）
+        def to_native(val):
+            """递归转换 numpy 类型为原生 Python 类型"""
+            import numpy as np
+            if isinstance(val, (np.integer,)):
+                return int(val)
+            if isinstance(val, (np.floating,)):
+                return float(val)
+            if isinstance(val, np.ndarray):
+                return val.tolist()
+            if isinstance(val, dict):
+                return {k: to_native(v) for k, v in val.items()}
+            if isinstance(val, (list, tuple)):
+                return [to_native(v) for v in val]
+            return val
+
         detections_list = []
         for det in result.defects:
             det_dict = {
-                "bbox": det.bbox,
-                "class_name": det.class_name,
-                "confidence": det.confidence,
-                "verdict": det.verdict,
-                "severity": det.severity,
+                "bbox": [float(v) for v in det.bbox],
+                "class_name": str(det.class_name),
+                "confidence": float(det.confidence),
+                "verdict": str(det.verdict),
+                "severity": str(det.severity),
             }
-            # 转换 Measurement 对象
             measurements_serializable = {}
             for k, v in det.measurements.items():
                 if hasattr(v, '__dataclass_fields__'):
                     measurements_serializable[k] = {
-                        "value": v.value,
-                        "unit": v.unit,
-                        "threshold": v.threshold,
-                        "passed": v.passed,
-                        "detail": v.detail,
+                        "value": float(v.value),
+                        "unit": str(v.unit),
+                        "threshold": float(v.threshold),
+                        "passed": bool(v.passed),
+                        "detail": str(v.detail),
                     }
                 else:
-                    measurements_serializable[k] = v
+                    measurements_serializable[k] = to_native(v)
             det_dict["measurements"] = measurements_serializable
-            # mask 太大不放入 state，仅标记有无
             det_dict["has_mask"] = det.mask is not None
             detections_list.append(det_dict)
 
         return {
             "detections": detections_list,
-            "detection_summary": result.summary,
+            "detection_summary": to_native(result.summary),
             "annotated_image_b64": result.annotated_image_b64,
-            "processing_time_ms": result.processing_time_ms,
+            "processing_time_ms": float(result.processing_time_ms),
             "retry_count": state.get("retry_count", 0) + 1,
             "error": None,
         }
@@ -264,16 +277,68 @@ def analysis_node(state: SmartEyeState) -> dict:
 
 def report_node(state: SmartEyeState) -> dict:
     """
-    ReportAgent: 生成质检报告。
+    ReportAgent: 生成质检报告 / 回答用户问题。
 
-    使用 LLM 生成 Markdown 格式报告，包含缺陷汇总、图表、处置建议。
+    如果是 chat 任务：搜索 RAG 知识库，生成对话式回复。
+    如果是 inspection 任务：生成质检报告。
     """
     import os
     from langchain_anthropic import ChatAnthropic
 
+    task_type = state.get("task_type", "inspection")
     detections = state.get("detections", [])
     summary = state.get("detection_summary", {})
     analysis = state.get("analysis_results", {})
+    user_message = state.get("user_message", "")
+
+    # ── Chat 模式：知识库问答 ──
+    if task_type == "chat" and user_message:
+        # 安全获取 RAG 上下文（绝不崩溃）
+        rag_context = ""
+        try:
+            from backend.rag.vector_store import get_collection
+            collection = get_collection()
+            chunk_count = collection.count()
+            print(f"[ReportAgent] Chat mode: KB has {chunk_count} chunks")
+            if chunk_count > 0:
+                results = collection.query(query_texts=[user_message], n_results=3)
+                docs = results.get("documents", [[]])[0]
+                metas = results.get("metadatas", [[]])[0]
+                if docs:
+                    rag_context = "\n\n".join([
+                        f"[来源: {m.get('source', '?') if m else '?'}]\n{d}"
+                        for d, m in zip(docs, metas)
+                    ])
+                    print(f"[ReportAgent] RAG found {len(docs)} results")
+                else:
+                    print("[ReportAgent] RAG query returned empty docs")
+        except Exception as e:
+            print(f"[ReportAgent] RAG search error (non-fatal): {type(e).__name__}: {e}")
+            import traceback
+            traceback.print_exc()
+
+        # 尝试用 LLM 生成回复
+        api_key = os.getenv("ANTHROPIC_API_KEY", "")
+        if api_key and rag_context:
+            try:
+                llm = ChatAnthropic(model=LLM_MODEL, temperature=LLM_TEMPERATURE, max_tokens=1024, api_key=api_key)
+                response = llm.invoke([
+                    ("system", "你是工厂质检助手。根据知识库内容回答用户问题。如果知识库没有相关信息，诚实告知。用中文回答。"),
+                    ("human", f"知识库参考:\n{rag_context}\n\n用户问题: {user_message}"),
+                ])
+                print(f"[ReportAgent] Chat reply: {response.content[:100]}...")
+                return {"report_markdown": response.content, "report_id": f"chat_{int(time.time())}", "error": None}
+            except Exception as e:
+                print(f"[ReportAgent] LLM failed: {e}")
+
+        # Fallback: 用知识库原文回复
+        if rag_context:
+            reply = f"**根据知识库检索结果：**\n\n{rag_context}"
+        else:
+            reply = f"关于「{user_message}」，知识库中暂未找到相关信息。请尝试其他关键词，或上传 PCB 图片进行视觉检测。"
+        return {"report_markdown": reply, "report_id": f"chat_{int(time.time())}", "error": None}
+
+    # ── Inspection 模式：生成质检报告 ──
 
     # 构建报告上下文
     context = f"""## 检测汇总
@@ -373,34 +438,47 @@ def _rule_based_routing(state: SmartEyeState) -> dict:
     """无 API Key 时的规则路由（fallback）"""
     task_type = state.get("task_type", "inspection")
     has_image = state.get("image_b64") is not None
-    has_detections = state.get("detections") is not None
+    has_message = bool(state.get("user_message"))
+    detections = state.get("detections")
+    has_detections = detections is not None and len(detections) > 0
     has_report = state.get("report_markdown") is not None
     alerted = state.get("alert_triggered", False)
     retry = state.get("retry_count", 0)
 
-    # 同一 agent 重试超过 2 次 → 跳过
-    if retry >= 2:
-        # 降级处理
-        if not has_detections and task_type == "inspection":
-            print("[Supervisor] Max retries, giving up inspection")
-            return {"next_agent": "report", "status": "running"}
+    # 同一 agent 重试超过 3 次 → 强制结束
+    if retry >= 3:
         if not has_report:
             return {"next_agent": "report", "status": "running"}
         return {"next_agent": "END", "status": "completed"}
 
-    # 正常路由
-    if has_image and not has_detections:
+    # ── Chat 模式：纯文字问答 → report agent (RAG 检索 + 回复) ──
+    if task_type == "chat" and has_message and not has_report:
+        return {"next_agent": "report", "status": "running"}
+    if task_type == "chat" and has_report:
+        return {"next_agent": "END", "status": "completed"}
+
+    # ── Inspection 模式 ──
+    # 有图像且还没检测过 → inspection
+    if has_image and detections is None:
         return {"next_agent": "inspection", "status": "running"}
-    if has_detections and not alerted:
-        # 检查是否有 CRITICAL
+
+    # 已检测完，有严重缺陷且未告警 → 先告警
+    if detections is not None and not alerted:
         summary = state.get("detection_summary", {})
         if summary.get("critical", 0) > 0:
             return {"next_agent": "alert", "status": "running"}
-    if has_detections and not has_report:
-        return {"next_agent": "report", "status": "running"}
-    if has_detections and has_report and not alerted:
-        return {"next_agent": "alert", "status": "running"}
 
+    # 已检测完（无论有没有缺陷）且没报告 → report
+    if detections is not None and not has_report:
+        return {"next_agent": "report", "status": "running"}
+
+    # 有报告未告警 → alert (最终检查)
+    if has_report and not alerted:
+        summary = state.get("detection_summary", {})
+        if summary.get("critical", 0) > 0:
+            return {"next_agent": "alert", "status": "running"}
+
+    # 全部完成
     return {"next_agent": "END", "status": "completed"}
 
 

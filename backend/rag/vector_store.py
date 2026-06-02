@@ -17,9 +17,20 @@ class STEmbeddingFunction(EmbeddingFunction):
     """
     使用 sentence-transformers 的 embedding 函数。
     支持 HF_ENDPOINT 环境变量设置镜像。
+    全局单例，避免 ChromaDB 因不同实例而拒绝读取已有 collection。
     """
+    _instance = None
+
+    def __new__(cls, model_name: str = "all-MiniLM-L6-v2"):
+        if cls._instance is None:
+            cls._instance = super().__new__(cls)
+            cls._instance._initialized = False
+        return cls._instance
 
     def __init__(self, model_name: str = "all-MiniLM-L6-v2"):
+        if self._initialized:
+            return
+        self._initialized = True
         self.model_name = model_name
         self._model = None
 
@@ -49,12 +60,29 @@ def get_chroma_client() -> chromadb.PersistentClient:
 def get_collection() -> chromadb.Collection:
     """获取或创建 knowledge collection"""
     client = get_chroma_client()
-    embed_fn = STEmbeddingFunction()
-    collection = client.get_or_create_collection(
-        name=CHROMA_COLLECTION_NAME,
-        metadata={"description": "SmartEye 工厂知识库 — IPC/SOP/缺陷案例/设备参数"},
-        embedding_function=embed_fn,
-    )
+    # 先尝试直接获取已有的 collection（不指定 embedding function）
+    try:
+        collection = client.get_collection(
+            name=CHROMA_COLLECTION_NAME,
+            embedding_function=STEmbeddingFunction(),
+        )
+        return collection
+    except Exception:
+        pass
+
+    # 不存在则创建
+    try:
+        collection = client.create_collection(
+            name=CHROMA_COLLECTION_NAME,
+            metadata={"description": "SmartEye 工厂知识库 — IPC/SOP/缺陷案例/设备参数"},
+            embedding_function=STEmbeddingFunction(),
+        )
+    except Exception:
+        # 可能已被其他进程创建，再试获取
+        collection = client.get_collection(
+            name=CHROMA_COLLECTION_NAME,
+            embedding_function=STEmbeddingFunction(),
+        )
     return collection
 
 
@@ -83,6 +111,7 @@ def build_knowledge_base(knowledge_dir: Optional[str] = None) -> int:
     collection = client.get_or_create_collection(
         name=CHROMA_COLLECTION_NAME,
         metadata={"description": "SmartEye 工厂知识库"},
+        embedding_function=STEmbeddingFunction(),
     )
 
     # 批量添加

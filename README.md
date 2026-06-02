@@ -1,6 +1,6 @@
 # SmartEye — 汽车电子产线 AI 质检多 Agent 系统
 
-🏭 **对标博世苏州汽车电子工厂 AI Agent 质检平台**
+🏭 **AI 驱动的 PCB 视觉质检多 Agent 系统**
 
 [![Python](https://img.shields.io/badge/Python-3.12-blue.svg)](https://python.org)
 [![LangGraph](https://img.shields.io/badge/LangGraph-0.2+-green.svg)](https://langchain.com)
@@ -101,7 +101,7 @@ smarteye/
 │   ├── models/       # 训练好的模型权重
 │   └── prompts/      # Agent System Prompts (Markdown)
 ├── frontend/
-│   ├── pages/        # 4 个 Streamlit 页面
+│   ├── views/        # 4 个 Streamlit 页面
 │   └── components/   # 可复用 UI 组件
 ├── data/
 │   ├── knowledge/    # RAG 知识库文档
@@ -122,12 +122,6 @@ smarteye/
 | 📊 AnalysisAgent | 统计分析 | defect_rate, trend, pareto, severity |
 | 📝 ReportAgent | 报告生成 | generate_report_md, render_chart, format_table, export |
 | 🚨 AlertAgent | 异常告警 | check_threshold, format_alert, suggest_action, escalate |
-
-## 面试相关
-
-- **设计文档**: [docs/superpowers/specs/2026-06-02-smarteye-design.md](../docs/superpowers/specs/2026-06-02-smarteye-design.md)
-- **白话说明文档**: [docs/SmartEye-白话说明文档.docx](docs/SmartEye-白话说明文档.docx)
-- **目标岗位**: 博世中国 AI Agent 应用实习生
 
 ## License
 
