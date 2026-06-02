@@ -30,6 +30,9 @@ async def inspect(req: InspectRequest):
         image_b64=req.image,
         sam_point=req.sam_point,
     )
+    # 将用户参数写入 state（原代码忽略了 conf_threshold 和 enable_sam）
+    initial_state["conf_threshold"] = req.conf_threshold
+    initial_state["enable_sam"] = req.enable_sam
 
     try:
         graph = get_graph()

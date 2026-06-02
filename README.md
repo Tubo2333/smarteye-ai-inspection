@@ -93,35 +93,33 @@ streamlit run frontend/app.py
 smarteye/
 ├── backend/
 │   ├── api/          # FastAPI 路由 + Schemas
-│   ├── orchestrator/ # LangGraph StateGraph
-│   ├── agents/       # 5 个 Agent 实现
-│   ├── tools/        # 16 个 Tool (@tool 装饰器)
+│   ├── orchestrator/ # LangGraph StateGraph + Agent 节点
 │   ├── cv/           # YOLO + OpenCV + SAM + Fusion
 │   ├── rag/          # ChromaDB 检索 pipeline
 │   ├── models/       # 训练好的模型权重
 │   └── prompts/      # Agent System Prompts (Markdown)
 ├── frontend/
-│   ├── views/        # 4 个 Streamlit 页面
-│   └── components/   # 可复用 UI 组件
+│   └── views/        # 4 个 Streamlit 页面
 ├── data/
 │   ├── knowledge/    # RAG 知识库文档
 │   ├── sample_images/# Demo 用 PCB 图片
 │   └── pcb_dataset/  # PCB 缺陷训练数据
 ├── tests/            # Pytest 测试
-├── notebooks/        # Jupyter 开发笔记
 ├── scripts/          # 辅助脚本
 └── docs/             # 文档
 ```
 
 ## 五个 Agent
 
-| Agent | 职责 | 核心 Tool |
-|-------|------|-----------|
-| 🎯 SupervisorAgent | 总调度，动态路由 | — |
-| 🔍 InspectionAgent | 视觉缺陷检测 | detect_defects, measure_component, segment_region, ocr |
-| 📊 AnalysisAgent | 统计分析 | defect_rate, trend, pareto, severity |
-| 📝 ReportAgent | 报告生成 | generate_report_md, render_chart, format_table, export |
-| 🚨 AlertAgent | 异常告警 | check_threshold, format_alert, suggest_action, escalate |
+所有 Agent 逻辑实现在 `backend/orchestrator/graph.py` 中，通过 LangGraph StateGraph 编排。
+
+| Agent 节点 | 职责 |
+|-----------|------|
+| 🎯 supervisor_node | 总调度，基于当前状态动态路由到合适的 Worker |
+| 🔍 inspection_node | 视觉缺陷检测：调用 YOLO + OpenCV + SAM 三引擎 |
+| 📊 analysis_node | 统计分析：缺陷率计算、趋势判断、系统性异常识别 |
+| 📝 report_node | 报告生成 + 知识库问答：Markdown 报告 / RAG 对话回复 |
+| 🚨 alert_node | 异常告警：三级严重度评定 + 处置建议 |
 
 ## License
 

@@ -114,10 +114,12 @@ def set_chat_session(session_id: str):
 
 
 def delete_inspect_session(session_id: str):
-    """删除指定检测会话"""
+    """删除指定检测会话及其聊天历史"""
     st.session_state.inspect_sessions = [
         s for s in st.session_state.inspect_sessions if s["id"] != session_id
     ]
+    # 清理关联的聊天历史
+    st.session_state.chat_histories.pop(session_id, None)
     if st.session_state.get("active_session_id") == session_id:
         st.session_state.active_session_id = None
     if st.session_state.get("chat_session_id") == session_id:

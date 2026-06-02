@@ -6,6 +6,7 @@ import io
 import streamlit as st
 import requests
 from PIL import Image
+from pathlib import Path
 from frontend.session import add_inspect_session, get_inspect_sessions, delete_inspect_session, is_history_full, MAX_SESSIONS
 
 
@@ -49,20 +50,11 @@ def render(api_url: str):
         ("last_inspect_severity", None),
         ("last_inspect_image_b64", None),
         ("last_inspect_elapsed", None),
-        ("nav_target", None),
     ]:
         if key not in st.session_state:
             st.session_state[key] = default
 
-    # 处理页面跳转（从按钮触发的 rerun 中恢复）
-    target = st.session_state.nav_target
-    if target:
-        st.session_state.nav_target = None
-        if target == "chat":
-            st.switch_page("frontend/views/chat_page.py") if False else None  # placeholder
-        # 用 sidebar radio 来切换——无法直接 switch_page, 通过标记让用户手动点
-
-    sample_dir = "data/sample_images"
+    sample_dir = str(Path(__file__).parent.parent.parent / "data" / "sample_images")
     samples = []
     if os.path.isdir(sample_dir):
         for f in sorted(os.listdir(sample_dir)):

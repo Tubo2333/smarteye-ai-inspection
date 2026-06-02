@@ -14,7 +14,7 @@ from langgraph.checkpoint.memory import MemorySaver
 from langchain_core.messages import HumanMessage, AIMessage
 
 from backend.orchestrator.state import SmartEyeState, create_initial_state
-from backend.config import LLM_MODEL, LLM_TEMPERATURE, LLM_MAX_TOKENS, PROMPTS_DIR
+from backend.config import LLM_MODEL, LLM_TEMPERATURE, LLM_MAX_TOKENS, PROMPTS_DIR, YOLO_CONF_THRESHOLD
 
 # ═══════════════════════════════════════════════════════════════
 # Graph 构建
@@ -161,11 +161,14 @@ def inspection_node(state: SmartEyeState) -> dict:
         from backend.cv.fusion import fusion_inspect
 
         sam_point = state.get("sam_point")
+        conf_threshold = state.get("conf_threshold", YOLO_CONF_THRESHOLD)
+        enable_sam = state.get("enable_sam", True)
         result = fusion_inspect(
             image,
             sam_interactive=sam_point is not None,
             sam_point=(sam_point["x"], sam_point["y"]) if sam_point else None,
-            enable_sam=True,
+            enable_sam=enable_sam,
+            conf_threshold=conf_threshold,
         )
 
         # 转换 Detection 对象为 dict（确保所有数值为原生 Python 类型）

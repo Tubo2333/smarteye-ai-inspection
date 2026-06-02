@@ -283,34 +283,41 @@ def draw_annotations(image: np.ndarray, detections: List[Detection], max_size: i
     """
     img = image.copy()
 
-    # 缩放大图
+    # 缩放大图（使用缩放后的副本，不修改原始 detections）
     h, w = img.shape[:2]
     longest = max(h, w)
     scale = 1.0
+    scaled_bboxes = []
+    scaled_masks = []
     if longest > max_size:
         scale = max_size / longest
         new_w, new_h = int(w * scale), int(h * scale)
         img = cv2.resize(img, (new_w, new_h))
-        # 同步缩放所有 bbox 和 mask
         for det in detections:
-            det.bbox = [v * scale for v in det.bbox]
+            scaled_bboxes.append([v * scale for v in det.bbox])
             if det.mask is not None:
-                det.mask = cv2.resize(
-                    det.mask.astype(np.uint8),
-                    (new_w, new_h),
+                scaled_masks.append(cv2.resize(
+                    det.mask.astype(np.uint8), (new_w, new_h),
                     interpolation=cv2.INTER_NEAREST,
-                ).astype(bool)
+                ).astype(bool))
+            else:
+                scaled_masks.append(None)
+    else:
+        scaled_bboxes = [det.bbox for det in detections]
+        scaled_masks = [det.mask for det in detections]
 
     overlay = img.copy()
 
-    for det in detections:
+    for i, det in enumerate(detections):
         color = COLORS.get(det.severity, (128, 128, 128))
-        x1, y1, x2, y2 = map(int, det.bbox)
+        bbox = scaled_bboxes[i]
+        mask = scaled_masks[i]
+        x1, y1, x2, y2 = map(int, bbox)
 
         # 绘制 SAM mask（半透明）
-        if det.mask is not None:
+        if mask is not None:
             mask_resized = cv2.resize(
-                det.mask.astype(np.uint8),
+                mask.astype(np.uint8),
                 (x2 - x1, y2 - y1),
                 interpolation=cv2.INTER_NEAREST,
             )
@@ -328,8 +335,9 @@ def draw_annotations(image: np.ndarray, detections: List[Detection], max_size: i
     img = cv2.addWeighted(overlay, 0.5, img, 0.5, 0)
 
     # 绘制标签
-    for det in detections:
-        x1, y1, x2, y2 = map(int, det.bbox)
+    for i, det in enumerate(detections):
+        bbox = scaled_bboxes[i]
+        x1, y1, x2, y2 = map(int, bbox)
         label = f"{CLASS_NAMES_ZH.get(det.class_name, det.class_name)} {det.confidence:.2f}"
         label_y = y1 - 10 if y1 > 20 else y1 + 20
         cv2.putText(img, label, (x1, label_y),

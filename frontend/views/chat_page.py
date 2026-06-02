@@ -137,8 +137,8 @@ def render(api_url: str):
             ("🔍 根因", "根据缺陷特征推测可能的根因，建议排查方向"),
             ("📝 报告", "基于以上检测结果生成完整的质检报告（Markdown格式）"),
         ]
-        for label, text in prompts:
-            if st.button(label, key=f"qp_{label}", use_container_width=True, help=text):
+        for i, (label, text) in enumerate(prompts):
+            if st.button(label, key=f"qp_{i}", use_container_width=True, help=text):
                 st.session_state.chat_pending_msg = text
                 st.rerun()
 

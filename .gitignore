@@ -40,3 +40,12 @@ docs/*.docx
 docs/~
 docs/gen_demo_docx.js
 huggingface-space/
+
+# Logs
+*.log
+
+# Pytest
+.pytest_cache/
+
+# Office temp
+docs/~$*

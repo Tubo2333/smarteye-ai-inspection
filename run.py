@@ -153,7 +153,7 @@ except Exception as e:
             s.close()
             print(f"[INFO] 端口 {port} 被占用，尝试清理...")
             if os.name == "nt":
-                os.system(f'for /f "tokens=5" %a in (\'netstat -ano ^| findstr :{port}\') do taskkill //F //PID %a 2>nul')
+                os.system(f'for /f "tokens=5" %a in (\'netstat -ano ^| findstr :{port}\') do taskkill /F /PID %a 2>nul')
             else:
                 os.system(f"lsof -ti:{port} | xargs kill -9 2>/dev/null")
             time.sleep(2)
