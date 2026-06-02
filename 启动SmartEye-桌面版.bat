@@ -43,7 +43,9 @@ if errorlevel 1 (
 REM --- Launch desktop app ---
 echo.
 echo Launching SmartEye Desktop...
-venv\Scripts\python.exe desktop_app.py
+echo Console will hide automatically after window opens.
+echo Close the SmartEye window to exit completely.
+start "" venv\Scripts\python.exe desktop_app.py
 
 echo.
 echo ================================================
